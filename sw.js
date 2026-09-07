@@ -1,4 +1,4 @@
-const CACHE = 'jc-training-v8';
+const CACHE = 'jc-training-v9';
 const ASSETS = [
   '/',
   '/index.html',
@@ -13,6 +13,7 @@ const ASSETS = [
   '/v7.css','/v7.js',
   '/v7_1.css','/v7_1.js',
   '/v8.js',
+  '/v9.css','/v9.js',
   '/manifest.json',
   '/icon.svg',
   '/icon-192.png',
