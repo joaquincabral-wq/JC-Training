@@ -121,7 +121,60 @@ v7MealCard=function(day,date,m,mi){
 const oldRenderMealsV10b=renderMeals;
 renderMeals=function(){oldRenderMealsV10b();document.querySelectorAll('[data-v10-remove-add]').forEach(b=>b.onclick=()=>{const [date,mi,i]=b.dataset.v10RemoveAdd.split('|'),key=`v10MealAdds:${date}`,d=load(key,{});(d[mi]||[]).splice(+i,1);if(!(d[mi]||[]).length)delete d[mi];save(key,d);renderMeals();});};
 
+// V10.1 — sincronización completa Comidas <-> Hoy y macros de alimentos añadidos.
+function v10DateAdds(date=isoDate()){ return load(`v10MealAdds:${date}`,{})||{}; }
+function v10MealAdds(date,mi){ return v10DateAdds(date)[String(mi)]||[]; }
+function v10AddsMacros(date,mi=null){
+  let total={kcal:0,p:0,c:0,f:0}; const adds=v10DateAdds(date);
+  const rows=mi===null?Object.values(adds).flat():(adds[String(mi)]||[]);
+  rows.forEach(text=>{ total=v6Add(total,v6Macros(text)); });
+  return total;
+}
+
+// Los alimentos añadidos a una fecha concreta también cuentan como consumidos
+// cuando esa comida está marcada con ✓.
+const oldV6ConsumedTotalsV101=v6ConsumedTotals;
+v6ConsumedTotals=function(day,date=isoDate()){
+  let total=oldV6ConsumedTotalsV101(day,date), done=load(`meals:${date}`,{});
+  Object.keys(done).forEach(mi=>{ if(done[mi]) total=v6Add(total,v10AddsMacros(date,+mi)); });
+  return total;
+};
+
+// Muestra en Hoy los alimentos añadidos desde la pestaña Comidas.
+const oldMealCardV101=mealCard;
+mealCard=function(m,i,doneMeals){
+  let html=oldMealCardV101(m,i,doneMeals), date=isoDate(), adds=v10MealAdds(date,i);
+  if(!adds.length) return html;
+  const rows=adds.map((text,ai)=>{ const mac=v6Macros(text); return `<div class="food-row v10-added"><div class="food-text">${esc10(text)}<span class="original-food">Añadido hoy</span><span class="v6-food-macro">≈ ${v6Fmt(mac.kcal)} kcal · P ${v6Fmt(mac.p)} · HC ${v6Fmt(mac.c)} · G ${v6Fmt(mac.f)}</span></div><button class="food-omit-btn" data-v10-remove-today-add="${date}|${i}|${ai}">Quitar</button></div>`; }).join('');
+  const marker='</div></div>', pos=html.lastIndexOf(marker);
+  return pos>=0 ? html.slice(0,pos)+rows+html.slice(pos) : html;
+};
+
+// Reengancha el botón Quitar después de renderizar Hoy.
+const oldBindMealEventsV101=bindMealEvents;
+bindMealEvents=function(){
+  oldBindMealEventsV101();
+  document.querySelectorAll('[data-v10-remove-today-add]').forEach(b=>b.onclick=()=>{
+    const [date,mi,idx]=b.dataset.v10RemoveTodayAdd.split('|'), key=`v10MealAdds:${date}`, d=load(key,{});
+    (d[mi]||[]).splice(+idx,1); if(!(d[mi]||[]).length) delete d[mi]; save(key,d); render();
+  });
+};
+
+// Restaurar el plan original elimina también los alimentos añadidos ese día.
+const oldV6ResetDayV101=v6ResetDay;
+v6ResetDay=function(){ localStorage.removeItem(`v10MealAdds:${isoDate()}`); oldV6ResetDayV101(); };
+const oldV7ResetMealDateV101=v7ResetMealDate;
+v7ResetMealDate=function(date){ localStorage.removeItem(`v10MealAdds:${date}`); oldV7ResetMealDateV101(date); };
+
+// Considera una fecha "modificada" aunque el único cambio sea un alimento añadido.
+v7MealDay=function(day){
+  const date=v7NextDateForDay(day), base=v6PlanTotals(day), current=v6PlanTotals(day,date,true), dist=v6MacroPct(current);
+  const hasAdds=Object.values(v10DateAdds(date)).some(a=>Array.isArray(a)&&a.length);
+  const changed=Math.abs(base.kcal-current.kcal)>.5 || Object.keys(load(v6OmitKey(date),{})).length || Object.keys(load(`mealSubs:${date}`,{})).length || hasAdds;
+  return `<section class="section v7-day-section"><div class="section-title"><div><h2>${day.toUpperCase()}</h2><small class="v7-next">Plan para ${v7DateLabel(date)}${changed?' · modificado':''}</small></div><span>${TRAINING[day].name}</span></div><div class="card v6-day-summary v7-summary"><strong>≈ ${v6Fmt(current.kcal)} kcal</strong><span>P ${v6Fmt(current.p)} g · HC ${v6Fmt(current.c)} g · G ${v6Fmt(current.f)} g</span><small>Distribución: P ${v6Fmt(dist.p)}% · HC ${v6Fmt(dist.c)}% · G ${v6Fmt(dist.f)}%</small>${changed?`<button class="secondary-btn v7-reset-day" data-v7-meal-reset="${date}">Restaurar plan base de este día</button>`:''}</div>${MEALS[day].map((m,mi)=>v7MealCard(day,date,m,mi)).join('')}</section>`;
+};
+
 // Backup V7.1 ya exporta todo localStorage, por lo que incluye automáticamente v10CustomFoods y v10MealAdds:*.
-window.JC_TRAINING_VERSION='10';
+window.JC_TRAINING_VERSION='10.1';
 window.v9ApplyMonth(); render();
 })();
