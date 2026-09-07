@@ -62,5 +62,7 @@ function bindEditorActions(month,tab){document.querySelectorAll('[data-v9-addex]
 const v9PrevRender=render;render=function(){if(state.view==='v9plans')return renderV9(monthNow(),'training');applyMonth();return v9PrevRender();};
 // Backup V9: V7.1 exporta todo localStorage; actualizamos solo la versión visible del archivo.
 window.JC_TRAINING_VERSION='9';
+// API interna expuesta para extensiones posteriores (V10+).
+Object.assign(window,{v9PlansGet:plans,v9PlansPut:putPlans,v9ApplyMonth:applyMonth,v9MonthNow:monthNow,v9ReadMeals:readMeals,v9Render:renderV9,v9BindEditorActions:bindEditorActions});
 render();
 })();
