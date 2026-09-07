@@ -78,3 +78,20 @@ h1 { margin: 4px 0 0; font-size: 28px; }
   .stat-row { grid-template-columns: 1fr 1fr 1fr; }
   .timer-value { font-size: 60px; }
 }
+
+.set-label small { display:block; margin-top:2px; color:#64748b; font-size:9px; }
+.previous-box { margin-top:10px; padding:10px 12px; border-radius:12px; background:rgba(56,189,248,.07); border:1px solid rgba(56,189,248,.18); color:#cbd5e1; font-size:12px; line-height:1.45; }
+.previous-box strong { display:block; color:#e2e8f0; margin-bottom:3px; }
+.previous-box span { display:block; margin-top:4px; color:#7dd3fc; font-weight:700; }
+.muted-box { color:var(--muted); }
+.howto { margin-top:10px; border-top:1px solid rgba(255,255,255,.06); padding-top:9px; }
+.howto summary { cursor:pointer; color:#bae6fd; font-weight:750; font-size:13px; }
+.howto-body { padding:8px 2px 0; color:#cbd5e1; font-size:12px; }
+.howto-body strong { color:#e2e8f0; }
+.howto-body ul { margin:7px 0 0; padding-left:18px; }
+.howto-body li { margin:4px 0; }
+.history-details { background:linear-gradient(180deg, var(--panel), #101727); border:1px solid var(--border); border-radius:16px; padding:12px; margin-bottom:10px; }
+.history-details summary { cursor:pointer; display:flex; justify-content:space-between; gap:12px; align-items:center; }
+.history-details summary span { color:var(--muted); font-size:12px; }
+.history-ex { margin-top:10px; padding-top:8px; border-top:1px solid rgba(255,255,255,.06); font-size:12px; color:#cbd5e1; }
+.history-ex strong { display:block; color:#f8fafc; margin-bottom:3px; }

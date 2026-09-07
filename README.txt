@@ -36,3 +36,6 @@ ALTERNATIVA MUY FACIL:
 Puedes usar Netlify Drop (plan gratuito) arrastrando esta carpeta/zip y obtener una URL HTTPS.
 
 Los datos se guardan solo en localStorage del navegador/dispositivo. Usa la opción Exportar copia periódicamente.
+
+
+V2: repeticiones objetivo visibles por serie, historial detallado, sesión anterior y sugerencia de progresión, técnica de ejercicios, cálculo de duración más realista y % de grasa opcional.
