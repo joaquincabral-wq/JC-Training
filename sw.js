@@ -1,14 +1,28 @@
-const CACHE = 'jc-training-v7-2';
+const CACHE = 'jc-training-v8';
 const ASSETS = [
-  './','./index.html','./styles.css','./app.js',
-  './v3.css','./v3.js','./v4.css','./v4.js','./v4_1.css','./v4_1.js',
-  './v4_2.css','./v4_2.js','./v5.css','./v5.js','./v6.css','./v6.js',
-  './v7.css','./v7.js','./v7_1.css','./v7_1.js',
-  './manifest.json','./icon-192.png','./icon-512.png','./apple-touch-icon.png'
+  '/',
+  '/index.html',
+  '/styles.css',
+  '/app.js',
+  '/v3.css','/v3.js',
+  '/v4.css','/v4.js',
+  '/v4_1.css','/v4_1.js',
+  '/v4_2.css','/v4_2.js',
+  '/v5.css','/v5.js',
+  '/v6.css','/v6.js',
+  '/v7.css','/v7.js',
+  '/v7_1.css','/v7_1.js',
+  '/v8.js',
+  '/manifest.json',
+  '/icon.svg',
+  '/icon-192.png',
+  '/icon-512.png'
 ];
 
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)));
+  event.waitUntil(
+    caches.open(CACHE).then(cache => cache.addAll(ASSETS))
+  );
   self.skipWaiting();
 });
 
@@ -22,13 +36,30 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
+
+  // HTML: red primero para no quedarse atrapado en una versión antigua.
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          const copy = response.clone();
+          caches.open(CACHE).then(cache => cache.put('/index.html', copy));
+          return response;
+        })
+        .catch(() => caches.match('/index.html'))
+    );
+    return;
+  }
+
+  // Resto: caché primero, después red.
   event.respondWith(
-    fetch(event.request)
-      .then(response => {
+    caches.match(event.request).then(cached => {
+      if (cached) return cached;
+      return fetch(event.request).then(response => {
         const copy = response.clone();
         caches.open(CACHE).then(cache => cache.put(event.request, copy));
         return response;
-      })
-      .catch(() => caches.match(event.request))
+      });
+    })
   );
 });
