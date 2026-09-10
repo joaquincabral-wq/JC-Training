@@ -1,11 +1,9 @@
-JC TRAINING V12
+JC TRAINING V12 — BASE V11 ESTABLE
 
-Novedad principal:
-- Cada ejercicio muestra directamente la última carga usada.
-- Muestra el último registro de kg, reps y RIR por serie.
-- Indica una referencia simple: CALIBRAR / REPETIR / VALORA SUBIR / MANTENER-AJUSTAR.
-- El historial completo sigue disponible como función secundaria.
-- Mantiene todas las funciones de V11.1.
-- Caché PWA actualizada a V12.
+ÚNICA mejora:
+- En HOY, cada ejercicio ya realizado muestra la última sesión registrada.
+- Se muestran fecha, kg, repeticiones y RIR por serie.
+- No rellena ni modifica automáticamente la sesión actual.
+- No se ha tocado ninguna otra función de V11.
 
-Sube TODO el contenido del ZIP sustituyendo archivos coincidentes.
+Sube todo el contenido del ZIP sustituyendo los archivos coincidentes.
