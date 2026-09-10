@@ -1,0 +1,10 @@
+
+.v122-bulk-controls{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
+.v122-ex-head,.v122-meal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+.v122-ex-title,.v122-meal-title{font-weight:800}
+.v122-original-title{display:none!important}
+.v122-collapsed{display:none!important}
+.v122-completed-card{border-color:rgba(34,197,94,.35)!important;background:rgba(34,197,94,.055)!important}
+.v122-completed-card .v122-ex-title,.v122-completed-card .v122-meal-title{color:#86efac}
+.v122-toggle{flex:0 0 auto}
+@media(max-width:480px){.v122-bulk-controls{width:100%;margin-top:8px}.v122-bulk-controls .secondary-btn{flex:1}}
