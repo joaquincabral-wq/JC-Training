@@ -1,0 +1,13 @@
+
+.v12-last-load{margin:10px 0 12px;padding:11px 12px;border:1px solid rgba(148,163,184,.22);border-radius:14px;background:rgba(15,23,42,.58)}
+.v12-ref-head{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:.78rem;color:#94a3b8}
+.v12-ref-main{margin-top:7px;font-size:.96rem}
+.v12-ref-note{margin-top:3px;color:#94a3b8;font-size:.78rem}
+.v12-badge{padding:4px 8px;border-radius:999px;font-weight:800;font-size:.68rem;letter-spacing:.03em}
+.v12-badge.same{background:rgba(59,130,246,.14);color:#93c5fd}
+.v12-badge.up{background:rgba(34,197,94,.14);color:#86efac}
+.v12-badge.review{background:rgba(245,158,11,.14);color:#fcd34d}
+.v12-badge.calibrate{background:rgba(148,163,184,.14);color:#cbd5e1}
+.v12-details{margin-top:8px;font-size:.8rem;color:#cbd5e1}
+.v12-details summary{cursor:pointer;color:#93c5fd}
+.v12-details div{padding-top:7px;line-height:1.55}
