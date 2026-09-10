@@ -153,7 +153,10 @@ const state = {
 const el = id => document.getElementById(id);
 const fmtDate = d => d.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'});
 const dayKey = (d=new Date()) => DAYS[d.getDay()];
-const isoDate = (d=new Date()) => d.toISOString().slice(0,10);
+const isoDate = (d=new Date()) => {
+  const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+};
 const load = (k, fallback) => { try { return JSON.parse(localStorage.getItem(k)) ?? fallback; } catch { return fallback; } };
 const save = (k,v) => localStorage.setItem(k, JSON.stringify(v));
 

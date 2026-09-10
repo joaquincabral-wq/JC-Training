@@ -162,7 +162,7 @@
     });
   }
 
-  function run(){ensureTodayCollapse();addHistoryEditors();addFuturePlanning();}
+  function run(){addHistoryEditors();addFuturePlanning();}
   const obs=new MutationObserver(()=>{clearTimeout(window.__v121);window.__v121=setTimeout(run,120);});
   obs.observe(document.body,{childList:true,subtree:true});
   document.addEventListener('DOMContentLoaded',run);

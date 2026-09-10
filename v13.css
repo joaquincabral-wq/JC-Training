@@ -1,0 +1,46 @@
+
+/* JC Training V13 — Today compact */
+.v13-hide{display:none!important}
+.v13-clickable{cursor:pointer}
+.v13-section-toggle,.v13-item-toggle{
+  appearance:none;border:1px solid rgba(148,163,184,.22);background:#162138;color:#e5edf7;
+  width:42px;height:38px;border-radius:12px;font-size:20px;font-weight:800;line-height:1;flex:0 0 auto
+}
+.v13-section-closed{margin-bottom:12px!important}
+.v13-section-closed>.section-title{
+  margin-bottom:0!important;padding:14px 16px;border:1px solid rgba(148,163,184,.18);
+  border-radius:18px;background:rgba(15,23,42,.62)
+}
+.v13-section-closed>.section-title h2{font-size:1.03rem!important}
+.v13-section-closed>.section-title span{font-size:.78rem!important}
+
+.v13-ex-summary{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:54px;cursor:pointer
+}
+.v13-ex-summary-text{min-width:0;display:flex;flex-direction:column;gap:2px}
+.v13-ex-summary-text strong{font-size:.95rem;line-height:1.2}
+.v13-ex-summary-text span{font-size:.76rem;color:#94a3b8;line-height:1.25}
+.v13-item-closed{padding-top:10px!important;padding-bottom:10px!important}
+.v13-done{border-color:rgba(34,197,94,.32)!important;background:rgba(34,197,94,.05)!important}
+.v13-done .v13-ex-summary-text strong,.v13-done .meal-title strong{color:#86efac}
+
+.v13-session-summary{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:10px}
+.v13-session-summary span{font-size:.76rem;color:#94a3b8;text-align:right}
+
+/* Neutralize obsolete Today controls from previous releases */
+#content .v121-collapse-btn,#content .v121-workout-summary,#content .v122-bulk-controls{display:none!important}
+#content .v121-hidden-workout{display:block}
+#content .v106-meal-toggle{display:none!important}
+
+/* Media mañana compact */
+.v105-mid.v13-section-closed>.section-title{margin-bottom:0}
+
+/* Keep macros layout intact when opened */
+.v6-macros:not(.v13-section-closed) .macro-card{display:block}
+
+/* Mobile spacing */
+@media(max-width:520px){
+  #content>.section{margin-bottom:14px}
+  .v13-section-closed>.section-title{padding:12px 14px}
+  .v13-section-toggle,.v13-item-toggle{width:40px;height:36px}
+}
