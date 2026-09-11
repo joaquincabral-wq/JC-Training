@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "JC Training",
-  "short_name": "JC Training",
-  "description": "Entrenamiento, alimentación y progreso personal.",
+  "name": "JC Nutrition",
+  "short_name": "JC Nutrition",
+  "description": "Alimentación, macros y progreso corporal.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
