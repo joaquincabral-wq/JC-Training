@@ -1,171 +1,123 @@
 
+// JC Training V12.1 — notas persistentes por ejercicio.
 (function(){
   'use strict';
-  const todayISO=()=>new Date().toISOString().slice(0,10);
-  const safeJSON=(k,f)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):f;}catch(e){return f;}};
-  const saveJSON=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
 
-  function findTodayWorkoutSection(){
-    const active=document.querySelector('.nav-btn.active');
-    if(active?.dataset?.view!=='today') return null;
-    const headings=[...document.querySelectorAll('h2,h3,.section-title,.card-title')];
-    const h=headings.find(el=>/entrenamiento|workout/i.test(el.textContent||''));
-    if(!h) return null;
-    return h.closest('section') || h.parentElement?.parentElement || null;
+  function norm(s){
+    return (s || '')
+      .toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .replace(/\s+/g,' ')
+      .trim();
   }
 
-  function ensureTodayCollapse(){
-    const section=findTodayWorkoutSection();
-    if(!section || section.dataset.v121==='1') return;
-    section.dataset.v121='1';
-    const date=todayISO();
-    const header=section.querySelector('.section-title') || section.querySelector('h2,h3')?.parentElement || section;
-    const btn=document.createElement('button');
-    btn.className='secondary-btn v121-collapse-btn';
-    btn.type='button';
-    header.appendChild(btn);
-    const summary=document.createElement('div');
-    summary.className='v121-workout-summary hidden';
-    summary.innerHTML='<strong>Entrenamiento contraído</strong><span>Pulsa “Desplegar” para continuar o revisar.</span>';
-    header.insertAdjacentElement('afterend',summary);
-    const bodyChildren=[...section.children].filter(ch=>ch!==header && ch!==summary);
-    function apply(state){
-      localStorage.setItem(`v121TodayWorkoutCollapsed:${date}`,state?'1':'0');
-      btn.textContent=state?'⌄ Desplegar':'⌃ Contraer';
-      bodyChildren.forEach(ch=>ch.classList.toggle('v121-hidden-workout',state));
-      summary.classList.toggle('hidden',!state);
+  function noteKey(name){
+    return `exerciseNote:${norm(name)}`;
+  }
+
+  function getName(card){
+    return (
+      card.dataset.exerciseName ||
+      card.dataset.exercise ||
+      card.querySelector('.exercise-name')?.textContent ||
+      card.querySelector('h3')?.textContent ||
+      card.querySelector('h4')?.textContent ||
+      ''
+    ).trim();
+  }
+
+  function addNote(card){
+    if(card.querySelector('.v121-note-box')) return;
+
+    const name = getName(card);
+    if(!name) return;
+
+    const saved = localStorage.getItem(noteKey(name)) || '';
+    const box = document.createElement('div');
+    box.className = 'v121-note-box';
+
+    box.innerHTML = `
+      <div class="v121-note-head">
+        <span>📝 Nota</span>
+        <button type="button" class="v121-note-edit secondary-btn">${saved ? 'Editar' : 'Añadir nota'}</button>
+      </div>
+      <div class="v121-note-text ${saved ? '' : 'hidden'}"></div>
+      <div class="v121-note-editor hidden">
+        <textarea class="v121-note-input" rows="3" placeholder="Ej.: abductores = abrir hacia fuera; agarre neutro; banco a 30°..."></textarea>
+        <div class="v121-note-actions">
+          <button type="button" class="primary-btn v121-note-save">Guardar</button>
+          <button type="button" class="secondary-btn v121-note-cancel">Cancelar</button>
+          <button type="button" class="danger-btn v121-note-delete ${saved ? '' : 'hidden'}">Eliminar nota</button>
+        </div>
+      </div>
+    `;
+
+    const text = box.querySelector('.v121-note-text');
+    const editor = box.querySelector('.v121-note-editor');
+    const input = box.querySelector('.v121-note-input');
+    const edit = box.querySelector('.v121-note-edit');
+    const del = box.querySelector('.v121-note-delete');
+
+    text.textContent = saved;
+    input.value = saved;
+
+    function openEditor(){
+      input.value = localStorage.getItem(noteKey(name)) || '';
+      editor.classList.remove('hidden');
+      text.classList.add('hidden');
+      edit.classList.add('hidden');
+      del.classList.toggle('hidden', !input.value);
+      setTimeout(()=>input.focus(),0);
     }
-    btn.onclick=()=>apply(!(localStorage.getItem(`v121TodayWorkoutCollapsed:${date}`)==='1'));
-    apply(localStorage.getItem(`v121TodayWorkoutCollapsed:${date}`)==='1');
-    document.addEventListener('click',e=>{
-      if(/finalizar entrenamiento/i.test(e.target?.textContent||'')) setTimeout(()=>apply(true),300);
-    });
+
+    function closeEditor(){
+      const current = localStorage.getItem(noteKey(name)) || '';
+      text.textContent = current;
+      text.classList.toggle('hidden', !current);
+      editor.classList.add('hidden');
+      edit.classList.remove('hidden');
+      edit.textContent = current ? 'Editar' : 'Añadir nota';
+      del.classList.toggle('hidden', !current);
+    }
+
+    edit.onclick = openEditor;
+    box.querySelector('.v121-note-cancel').onclick = closeEditor;
+    box.querySelector('.v121-note-save').onclick = () => {
+      const val = input.value.trim();
+      if(val) localStorage.setItem(noteKey(name), val);
+      else localStorage.removeItem(noteKey(name));
+      closeEditor();
+    };
+    box.querySelector('.v121-note-delete').onclick = () => {
+      localStorage.removeItem(noteKey(name));
+      input.value = '';
+      closeEditor();
+    };
+
+    const lastSession = card.querySelector('.v12-last-session');
+    if(lastSession) lastSession.insertAdjacentElement('afterend', box);
+    else {
+      const meta = card.querySelector('.exercise-meta');
+      const title = card.querySelector('.exercise-name, h3, h4');
+      if(meta) meta.insertAdjacentElement('afterend', box);
+      else if(title) title.insertAdjacentElement('afterend', box);
+      else card.prepend(box);
+    }
   }
 
-  function setRow(s={},si=0){
-    const row=document.createElement('div');
-    row.className='v121-set-row';
-    row.innerHTML=`<span>S${si+1}</span>
-      <input data-field="kg" placeholder="kg" value="${s.kg??''}">
-      <input data-field="reps" placeholder="reps" value="${s.reps??''}">
-      <input data-field="rir" placeholder="RIR" value="${s.rir??''}">
-      <button class="danger-btn v121-del-set">×</button>`;
-    return row;
+  function apply(){
+    document.querySelectorAll(
+      '.exercise-card, .workout-exercise, [data-exercise-name], [data-exercise]'
+    ).forEach(addNote);
   }
 
-  function openHistoryEditor(session){
-    const overlay=document.createElement('div');
-    overlay.className='v121-modal';
-    overlay.innerHTML=`<div class="v121-panel"><div class="v121-panel-head">
-      <h3>Editar ${session.name||'sesión'} · ${session.date||''}</h3>
-      <button class="secondary-btn v121-close">Cerrar</button></div>
-      <div class="v121-history-form"></div>
-      <div class="v121-actions"><button class="primary-btn v121-save-history">Guardar cambios</button></div></div>`;
-    document.body.appendChild(overlay);
-    const form=overlay.querySelector('.v121-history-form');
-    (session.details||[]).forEach((ex,ei)=>{
-      const box=document.createElement('div');
-      box.className='v121-ex-edit';
-      box.innerHTML=`<label>Ejercicio<input data-kind="name" value="${ex.name||''}"></label>
-        <div class="v121-sets"></div>
-        <button class="secondary-btn v121-add-set">+ Serie</button>
-        <button class="danger-btn v121-del-ex">Eliminar ejercicio</button>`;
-      form.appendChild(box);
-      (ex.sets||[]).forEach((s,si)=>box.querySelector('.v121-sets').appendChild(setRow(s,si)));
-    });
-    const dur=document.createElement('div');
-    dur.className='v121-duration-edit';
-    dur.innerHTML=`<label>Duración total (min)<input id="v121Duration" type="number" min="0" step="1" value="${Math.round((session.elapsed||session.duration||0)/60)}"></label>`;
-    form.appendChild(dur);
+  const obs = new MutationObserver(()=>{
+    clearTimeout(window.__jcV121Notes);
+    window.__jcV121Notes = setTimeout(apply,80);
+  });
 
-    overlay.addEventListener('click',e=>{
-      if(e.target.classList.contains('v121-close')) overlay.remove();
-      if(e.target.classList.contains('v121-add-set')){
-        const setBox=e.target.closest('.v121-ex-edit').querySelector('.v121-sets');
-        setBox.appendChild(setRow({},setBox.children.length));
-      }
-      if(e.target.classList.contains('v121-del-set')) e.target.closest('.v121-set-row').remove();
-      if(e.target.classList.contains('v121-del-ex')) e.target.closest('.v121-ex-edit').remove();
-      if(e.target.classList.contains('v121-save-history')){
-        const hist=safeJSON('workoutHistory',[]);
-        const idx=hist.findIndex(h=>h.date===session.date && h.name===session.name);
-        if(idx<0) return;
-        const details=[...overlay.querySelectorAll('.v121-ex-edit')].map(box=>({
-          name:box.querySelector('[data-kind="name"]').value.trim(),
-          sets:[...box.querySelectorAll('.v121-set-row')].map(r=>({
-            kg:r.querySelector('[data-field="kg"]').value,
-            reps:r.querySelector('[data-field="reps"]').value,
-            rir:r.querySelector('[data-field="rir"]').value,
-            done:true
-          }))
-        }));
-        hist[idx]={...hist[idx],details,edited:true,editedAt:new Date().toISOString(),
-          elapsed:(+overlay.querySelector('#v121Duration').value||0)*60,
-          totalSets:details.reduce((n,e)=>n+e.sets.length,0),
-          completedSets:details.reduce((n,e)=>n+e.sets.length,0)};
-        saveJSON('workoutHistory',hist);
-        overlay.remove(); location.reload();
-      }
-    });
-  }
-
-  function addHistoryEditors(){
-    const active=document.querySelector('.nav-btn.active');
-    if(active?.dataset?.view!=='history') return;
-    const hist=safeJSON('workoutHistory',[]);
-    if(!Array.isArray(hist)) return;
-    [...document.querySelectorAll('.history-card,.card')].forEach(card=>{
-      if(card.querySelector('.v121-edit-history')) return;
-      const txt=card.textContent||'';
-      const s=hist.find(h=>txt.includes(h.date||'') && txt.includes(h.name||''));
-      if(!s) return;
-      const b=document.createElement('button');
-      b.className='secondary-btn v121-edit-history'; b.textContent='Editar sesión';
-      b.onclick=()=>openHistoryEditor(s);
-      card.appendChild(b);
-    });
-  }
-
-  function addFuturePlanning(){
-    const active=document.querySelector('.nav-btn.active');
-    if(active?.dataset?.view!=='training') return;
-    [...document.querySelectorAll('.exercise-card,.workout-exercise,[data-exercise-name],[data-exercise]')].forEach(card=>{
-      if(card.querySelector('.v121-preplan')) return;
-      const name=card.dataset.exerciseName||card.dataset.exercise||
-        card.querySelector('.exercise-name,h3,h4,.card-title')?.textContent?.trim();
-      if(!name) return;
-      const key='v121FuturePlan';
-      const all=safeJSON(key,{});
-      const saved=all[name]||{};
-      const wrap=document.createElement('details');
-      wrap.className='v121-preplan';
-      wrap.innerHTML=`<summary>Planificar peso y series</summary><div class="v121-preplan-body">
-        <label>Series<input class="v121-plan-sets" type="number" min="1" value="${saved.sets||''}"></label>
-        <label>Reps objetivo<input class="v121-plan-reps" type="number" min="1" value="${saved.reps||''}"></label>
-        <label>Peso previsto (kg)<input class="v121-plan-kg" value="${saved.kg||''}"></label>
-        <label>RIR objetivo<input class="v121-plan-rir" value="${saved.rir||''}"></label>
-        <button class="primary-btn v121-save-plan">Guardar planificación</button>
-        <span class="v121-plan-status">${saved.kg||saved.sets?'Planificación guardada':''}</span></div>`;
-      card.appendChild(wrap);
-      wrap.querySelector('.v121-save-plan').onclick=()=>{
-        const fresh=safeJSON(key,{});
-        fresh[name]={
-          sets:wrap.querySelector('.v121-plan-sets').value,
-          reps:wrap.querySelector('.v121-plan-reps').value,
-          kg:wrap.querySelector('.v121-plan-kg').value,
-          rir:wrap.querySelector('.v121-plan-rir').value,
-          savedAt:new Date().toISOString()
-        };
-        saveJSON(key,fresh);
-        wrap.querySelector('.v121-plan-status').textContent='Planificación guardada';
-      };
-    });
-  }
-
-  function run(){addHistoryEditors();addFuturePlanning();}
-  const obs=new MutationObserver(()=>{clearTimeout(window.__v121);window.__v121=setTimeout(run,120);});
   obs.observe(document.body,{childList:true,subtree:true});
-  document.addEventListener('DOMContentLoaded',run);
-  setTimeout(run,350);
-  setTimeout(run,900);
+  document.addEventListener('DOMContentLoaded',apply);
+  setTimeout(apply,250);
+  setTimeout(apply,800);
 })();
