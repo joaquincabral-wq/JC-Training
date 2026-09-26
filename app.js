@@ -35,7 +35,7 @@ function renderHistory(){const h=load(),dates=Object.keys(h).sort().reverse();do
 function renderProgress(){const names=[...new Set(Object.values(ROUTINE).flatMap(d=>d.ex.map(e=>e[0])))];const cards=names.map(n=>{const a=allFor(n);if(!a.length)return'';const last=a[a.length-1],first=a[0],delta=(Number(last[1].weight)||0)-(Number(first[1].weight)||0),recent=a.slice(-6).reverse();return `<div class='card'><div class='exhead'><h3>${n}</h3><span class='badge'>${last[1].weight||'-'} kg</span></div><p class='muted'>Cambio desde el primer registro: ${delta>0?'+':''}${delta.toFixed(1)} kg</p>${recent.map(([d,v])=>`<div class='progressrow'><span>${d}</span><b>${v.weight} kg · ${(v.reps||[]).join('/')}</b></div>`).join('')}</div>`}).join('');document.getElementById('app').innerHTML=`<section class='hero'><div class='muted'>EVOLUCIÓN</div><h1>Progreso</h1><div>Cargas y repeticiones por ejercicio</div></section>${cards||'<div class="card"><p class="muted">Guarda tu primer entrenamiento para ver la evolución.</p></div>'}`}
 function render(){if(view==='today'){selected=days[new Date().getDay()];renderToday()}else if(view==='week')renderWeek();else if(view==='history')renderHistory();else if(view==='progress')renderProgress();else renderToday()}
 document.querySelectorAll('nav button[data-v]').forEach(b=>b.onclick=()=>{view=b.dataset.v;render()});
-const NUTRITION_URL='https://joaquincabral-wq.github.io/JC-Nutrition/';
+const NUTRITION_URL='https://joaquincabral-wq.github.io/Nutrition/';
 const nutritionBtn=document.getElementById('openNutrition');
 if(nutritionBtn) nutritionBtn.onclick=()=>{ window.location.href=NUTRITION_URL; };
 render();
