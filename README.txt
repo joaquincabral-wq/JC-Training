@@ -1,8 +1,10 @@
-JC Training V1.2.0 · Registro completo
-- Interfaz unificada con JC Nutrition.
-- Hoy permite registrar peso por serie, repeticiones, series completadas y RIR.
-- Peso de primera serie se replica en las vacías para agilizar.
-- Histórico y progreso conservan compatibilidad con registros previos.
-- Semana incluye acceso directo a registrar el día elegido.
+JC Training V1.6.0 · Sustituciones inteligentes
 
-V1.3.0: técnica precargada, notas permanentes por ejercicio y reordenación temporal de ejercicios por sesión.
+Cambios:
+- Botón 🔄 Sustituir en cada ejercicio.
+- Alternativas recomendadas según patrón/músculo y material disponible.
+- Sustitución solo para la sesión actual por defecto; la rutina base no se modifica.
+- Botón para restaurar el ejercicio original.
+- Alternativa manual con series, repeticiones y descanso editables.
+- El historial y progreso se guardan bajo el ejercicio realmente realizado, para no mezclar cargas entre variantes.
+- Mantiene extras recomendados, reordenación, técnica, notas, pesos/reps/RIR y temporizador flexible.
