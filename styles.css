@@ -3,3 +3,7 @@
 .restline{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:5px}.tinyrest{padding:6px 9px;font-size:11px;border-radius:9px}.timerpanel{margin-top:10px;padding:10px 11px;background:#071522;border:1px solid #244462;border-radius:12px}.timerpanel .timer{display:block;margin-bottom:8px}.timercontrols{display:flex;gap:6px;flex-wrap:wrap}.timercontrols button{padding:8px 10px;font-size:12px}.timercontrols .nextset{background:#0e2c29;border-color:#2f8c64;color:#b7f7d3}
 
 .weekex{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid rgba(160,180,210,.16)}.weekex .muted{font-size:.85rem;margin-top:4px}.addform{margin:14px 0;padding:15px;border:1px solid rgba(160,180,210,.3);border-radius:14px;display:grid;gap:12px}.addform label{display:grid;gap:5px;font-size:.88rem}.addform input,.addform select,.addform textarea{width:100%;min-width:0;box-sizing:border-box;background:#152538;color:#fff;border:1px solid #42566c;border-radius:9px;padding:10px;font:inherit}.addgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.addform .row{display:flex;gap:8px;flex-wrap:wrap}
+
+.seriesactions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.seriesactions button{flex:1;min-width:130px}
+
+.variantbox{display:flex;flex-direction:column;gap:6px;margin:10px 0;padding:10px;border:1px solid #30445d;border-radius:10px}.variantbox select{width:100%;padding:10px;border-radius:8px;background:#14263a;color:#fff;border:1px solid #54708e}.variantbox small{font-size:12px}
