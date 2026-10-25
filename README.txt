@@ -15,3 +15,5 @@ NOTA: Los datos se guardan en localStorage del navegador; actualizar en el mismo
 V1.6: Botones para añadir y quitar series adicionales por ejercicio durante la sesión actual, conservando registros de otros días.
 
 V1.7: Curl femoral permite elegir sentado (preferente) o tumbado durante la sesión. Ambas técnicas explicadas. La variante queda guardada en el registro de ese día sin cambiar la clave histórica del ejercicio. Actualizada versión visible y caché de la aplicación.
+
+V1.8: Lunes se sustituye press convergente horizontal por press de banca plano con barra (3 x 6-8, objetivo 8 en registro, RIR 2, 180 s); se mantiene press inclinado mancuernas. Jueves conserva press plano mancuernas y press inclinado convergente. Aumentan cinco series semanales: laterales lunes, remo martes, jalón jueves, curl martillo y tríceps cuerda viernes. Mantiene claves de almacenamiento e historial. No se migran los registros del antiguo press convergente al nuevo ejercicio: son ejercicios distintos.
