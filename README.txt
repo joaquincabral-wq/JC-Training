@@ -1,3 +1,12 @@
+JC TRAINING V1.10.0 - AJUSTES LYFTA
+
+- Lunes: elevaciones laterales en polea unilateral por defecto; mancuernas como alternativa.
+- Martes: curl inclinado por defecto; curl unilateral en polea como alternativa.
+- Jueves: elevaciones laterales con mancuernas por defecto; polea unilateral como alternativa.
+- Se mantienen series, repeticiones, descansos, datos y claves de historial.
+- Las preferencias de variantes se guardan en el navegador.
+- Antes de publicar, exporta una copia de seguridad de los registros.
+
 JC Training V1.2.0 · Registro completo
 - Interfaz unificada con JC Nutrition.
 - Hoy permite registrar peso por serie, repeticiones, series completadas y RIR.
