@@ -12,3 +12,15 @@
 
 /* V1.12: planificación de pesos por serie */
 .weekweights{margin-top:10px}.weekweightgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(76px,1fr));gap:7px;margin:7px 0}.weekweightcell{display:flex;flex-direction:column;gap:5px;font-size:12px}.weekweightcell span{white-space:nowrap}.weekweightcell input{width:100%;min-width:0;padding:9px 5px;font-size:16px;border:1px solid #54647c;border-radius:7px;background:#0b1829;color:#fff}.weekweightcell input:focus{outline:2px solid #5db5e9}
+
+/* V1.13: compact weekly planning; edit fields appear only on demand. */
+.weekex.weekedit{display:flex;align-items:flex-start;flex-wrap:wrap;gap:6px 8px;padding:12px 0}
+.weekex .weekmain{flex:1 1 55%;min-width:0}
+.weekcompact{font-size:.77rem;color:#a8bed1;line-height:1.45;margin-top:4px;overflow-wrap:anywhere}
+.weeknote{font-size:.74rem;color:#8ca9bf;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.weekactions{flex:0 0 auto;gap:4px}
+.weekactions button{padding:7px 8px;min-width:30px}
+.weekinlineeditor{flex:1 0 100%;min-width:0;scroll-margin-top:105px}
+.weekinlineeditor:empty{display:none}
+.weekinlineeditor .addform{margin:7px 0 4px;padding:12px}
+@media(max-width:390px){.weekactions button{padding:6px}.weekcompact{font-size:.72rem}}
