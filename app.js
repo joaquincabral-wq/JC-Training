@@ -114,6 +114,16 @@ let view='today',selected=days[new Date().getDay()];
 const HISTORY_KEY='jcTrainingHistoryV1';
 const load=()=>JSON.parse(localStorage.getItem(HISTORY_KEY)||'{}');
 const save=x=>localStorage.setItem(HISTORY_KEY,JSON.stringify(x));
+// V1.12: cargas previstas por serie, independientes del historial realizado.
+const PLANNED_WEIGHT_KEY='jcTrainingPlannedWeightsV112';
+const loadPlannedWeights=()=>JSON.parse(localStorage.getItem(PLANNED_WEIGHT_KEY)||'{}');
+function plannedWeights(day,name,sets){
+ const saved=loadPlannedWeights()?.[day]?.[name];
+ if(Array.isArray(saved))return Array.from({length:sets},(_,i)=>saved[i]??'');
+ const last=lastFor(name);return weightArray(last?.[1],sets);
+}
+function savePlannedWeights(day,name,weights){const all=loadPlannedWeights();all[day]??={};all[day][name]=weights;localStorage.setItem(PLANNED_WEIGHT_KEY,JSON.stringify(all))}
+
 const loadNotes=()=>JSON.parse(localStorage.getItem(NOTES_KEY)||'{}');
 const saveNote=(name,text)=>{const n=loadNotes();n[name]=text;localStorage.setItem(NOTES_KEY,JSON.stringify(n))};
 const loadOrders=()=>JSON.parse(localStorage.getItem(ORDER_KEY)||'{}');
@@ -139,7 +149,7 @@ function stopTimer(label=''){if(activeTimer){storeRestElapsed();const el=documen
 function startTimer(sec,id,i,date,day,name,setIndex){stopTimer();activeTimer={remaining:sec,elapsed:0,paused:false,id,i,date,day,name,setIndex,saved:false};timerDraw();timerInt=setInterval(()=>{if(!activeTimer||activeTimer.paused)return;activeTimer.remaining--;activeTimer.elapsed++;timerDraw();if(activeTimer.remaining<=0){const el=document.getElementById(activeTimer.id);storeRestElapsed();clearInterval(timerInt);timerInt=null;if(el)el.textContent=`✓ Descanso terminado · ${timerText(activeTimer.elapsed)}`;navigator.vibrate?.(250);activeTimer=null}},1000)}
 function adjustTimer(delta){if(!activeTimer)return;activeTimer.remaining=Math.max(0,activeTimer.remaining+delta);timerDraw();if(activeTimer.remaining===0)stopTimer('✓ Listo para la siguiente serie')}
 function togglePause(){if(!activeTimer)return;activeTimer.paused=!activeTimer.paused;timerDraw()}
-function exerciseState(date,day,name,sets,target){const h=load(),saved=h?.[date]?.ex?.[name];if(saved){sets=Math.max(sets,Number(saved.extraSets||0)+sets);return {...saved,weights:weightArray(saved,sets),reps:Array.from({length:sets},(_,i)=>saved.reps?.[i]??target),done:Array.from({length:sets},(_,i)=>!!saved.done?.[i]),rests:Array.from({length:sets},(_,i)=>saved.rests?.[i]??null)};}const last=lastFor(name),base=last?.[1];return {weights:weightArray(base,sets),reps:Array(sets).fill(target),done:Array(sets).fill(false),rests:Array(sets).fill(null),rir:'',completed:false}}
+function exerciseState(date,day,name,sets,target){const h=load(),saved=h?.[date]?.ex?.[name];if(saved){sets=Math.max(sets,Number(saved.extraSets||0)+sets);return {...saved,weights:weightArray(saved,sets),reps:Array.from({length:sets},(_,i)=>saved.reps?.[i]??target),done:Array.from({length:sets},(_,i)=>!!saved.done?.[i]),rests:Array.from({length:sets},(_,i)=>saved.rests?.[i]??null)};}const last=lastFor(name);return {weights:plannedWeights(day,name,sets),reps:Array(sets).fill(target),done:Array(sets).fill(false),rests:Array(sets).fill(null),rir:'',completed:false}}
 function storeExercise(date,day,name,state){const h=load();if(!h[date])h[date]={day,ex:{}};h[date].day=day;h[date].ex[name]=state;save(h)}
 function sessionProgress(day,date){const exs=allExercises(day,date),h=load(),s=h?.[date]?.ex||{};const done=exs.filter(e=>s[e[0]]?.completed).length;return {done,total:exs.length}}
 function renderToday(day=selected){selected=day;const r=ROUTINE[day],date=iso(),exs=orderedExercises(day,date),prog=sessionProgress(day,date);setTitle('Hoy');let html=`<section class='hero'><div class='eyebrow'>${day.toUpperCase()}</div><h2>${r.name}</h2><p>${r.nutrition}</p><div class='sessionbar'><span>${prog.done}/${prog.total} ejercicios guardados</span><i style='width:${prog.total?Math.round(prog.done/prog.total*100):0}%'></i></div></section>`;
@@ -174,13 +184,14 @@ function renderDayPreview(){
  const notes=loadNotes();
  el.innerHTML=`<div class='card'><div class='section-title'><h2>${r.name}</h2><span>${r.nutrition}</span></div>
  <p class='muted weekhint'>Prepara aquí tu rutina. Los cambios permanentes se aplican a las próximas semanas; los puntuales solo a esta fecha.</p>
- ${exs.map((e,i)=>`<div class='weekex weekedit'><div class='weekmain'><b>${i+1}. ${safeText(chosenVariant(selected,e[0]))}</b><div class='muted'>${e[1]} × ${e[2]} · ${e[3]} s descanso</div>${notes[e[0]]?`<div class='muted'>📝 ${safeText(notes[e[0]])}</div>`:''}</div><div class='weekactions'><button data-weekup='${i}' ${i===0?'disabled':''} aria-label='Subir ejercicio'>↑</button><button data-weekdown='${i}' ${i===exs.length-1?'disabled':''} aria-label='Bajar ejercicio'>↓</button><button data-weekedit='${i}'>Editar</button></div></div>`).join('')||'<p class="muted">Descanso. Puedes añadir ejercicios.</p>'}
+ ${exs.map((e,i)=>`<div class='weekex weekedit'><div class='weekmain'><b>${i+1}. ${safeText(chosenVariant(selected,e[0]))}</b><div class='muted'>${e[1]} × ${e[2]} · ${e[3]} s descanso</div>${notes[e[0]]?`<div class='muted'>📝 ${safeText(notes[e[0]])}</div>`:''}<div class='weekweights'><div class='muted'>Pesos por serie (kg) · último / próximo</div><div class='weekweightgrid'>${Array.from({length:e[1]},(_,ss)=>{const prev=lastFor(e[0]);const last=prev?weightArray(prev[1],e[1])[ss]:'';const planned=plannedWeights(selected,e[0],e[1])[ss];return `<label class='weekweightcell'><span>S${ss+1} · ${last!==''?safeText(last)+' kg':'—'}</span><input type='number' min='0' step='any' inputmode='decimal' aria-label='Peso previsto serie ${ss+1}' data-planweight='${i}:${ss}' value='${safeText(planned)}' placeholder='kg'></label>`}).join('')}</div><small class='muted'>El valor de la izquierda es el último registrado. Puedes preparar el siguiente peso en cada casilla.</small></div></div><div class='weekactions'><button data-weekup='${i}' ${i===0?'disabled':''} aria-label='Subir ejercicio'>↑</button><button data-weekdown='${i}' ${i===exs.length-1?'disabled':''} aria-label='Bajar ejercicio'>↓</button><button data-weekedit='${i}'>Editar</button></div></div>`).join('')||'<p class="muted">Descanso. Puedes añadir ejercicios.</p>'}
  <div id='weekEditor'></div><button id='addExercise' class='secondary wide'>＋ Añadir ejercicio</button>
  <div id='addPanel'></div><button id='resetPlan' class='secondary wide'>↺ Restaurar rutina original</button>
  <button id='trainSelected' class='primary wide'>Registrar este entrenamiento</button></div>`;
  document.getElementById('trainSelected').onclick=()=>{view='today';renderToday(selected);syncNav()};
  const saveChanged=(arr)=>{persistPlan(selected,date,arr,confirm('¿Guardar el nuevo orden para todas las semanas?\nAceptar: todas las semanas.\nCancelar: solo esta semana.')?'always':'once');renderDayPreview()};
  document.querySelectorAll('[data-weekup],[data-weekdown]').forEach(b=>b.onclick=()=>{const i=Number(b.dataset.weekup??b.dataset.weekdown),delta=b.hasAttribute('data-weekup')?-1:1,arr=exs.map(e=>e.slice());if(i+delta<0||i+delta>=arr.length)return;[arr[i],arr[i+delta]]=[arr[i+delta],arr[i]];saveChanged(arr)});
+ document.querySelectorAll('[data-planweight]').forEach(input=>input.onchange=()=>{const [i,ss]=input.dataset.planweight.split(':').map(Number),e=exs[i];if(!e)return;const value=input.value.trim().replace(',','.');if(value!==''&&(!Number.isFinite(Number(value))||Number(value)<0)){alert('Introduce un peso válido.');input.value=plannedWeights(selected,e[0],e[1])[ss]??'';return}const arr=plannedWeights(selected,e[0],e[1]);arr[ss]=value;savePlannedWeights(selected,e[0],arr)});
  document.querySelectorAll('[data-weekedit]').forEach(b=>b.onclick=()=>showWeekEditor(Number(b.dataset.weekedit),date));
  document.getElementById('addExercise').onclick=()=>showAddForm(date);
  document.getElementById('resetPlan').onclick=()=>{if(!confirm('¿Restaurar los ejercicios y su orden original? No se borrarán los registros históricos ni las notas.'))return;const scope=prompt('¿Restaurar todas las semanas o solo esta? Escribe: todas / esta','todas');if(scope===null)return;clearPlan(selected,date,scope.trim().toLowerCase()==='esta'?'once':'always');renderDayPreview()};

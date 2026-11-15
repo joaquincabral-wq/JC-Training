@@ -9,3 +9,6 @@
 .variantbox{display:flex;flex-direction:column;gap:6px;margin:10px 0;padding:10px;border:1px solid #30445d;border-radius:10px}.variantbox select{width:100%;padding:10px;border-radius:8px;background:#14263a;color:#fff;border:1px solid #54708e}.variantbox small{font-size:12px}
 
 .weekedit{align-items:flex-start;flex-wrap:wrap}.weekmain{flex:1 1 180px;min-width:0}.weekactions{display:flex;gap:5px;align-items:center}.weekactions button{padding:8px;font-size:12px}.weekactions button:disabled{opacity:.35}.weekhint{margin-bottom:10px!important}.weekedit .muted{overflow-wrap:anywhere}#weekEditor{scroll-margin-top:110px}
+
+/* V1.12: planificación de pesos por serie */
+.weekweights{margin-top:10px}.weekweightgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(76px,1fr));gap:7px;margin:7px 0}.weekweightcell{display:flex;flex-direction:column;gap:5px;font-size:12px}.weekweightcell span{white-space:nowrap}.weekweightcell input{width:100%;min-width:0;padding:9px 5px;font-size:16px;border:1px solid #54647c;border-radius:7px;background:#0b1829;color:#fff}.weekweightcell input:focus{outline:2px solid #5db5e9}
