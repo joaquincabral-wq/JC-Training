@@ -7,3 +7,5 @@
 .seriesactions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.seriesactions button{flex:1;min-width:130px}
 
 .variantbox{display:flex;flex-direction:column;gap:6px;margin:10px 0;padding:10px;border:1px solid #30445d;border-radius:10px}.variantbox select{width:100%;padding:10px;border-radius:8px;background:#14263a;color:#fff;border:1px solid #54708e}.variantbox small{font-size:12px}
+
+.weekedit{align-items:flex-start;flex-wrap:wrap}.weekmain{flex:1 1 180px;min-width:0}.weekactions{display:flex;gap:5px;align-items:center}.weekactions button{padding:8px;font-size:12px}.weekactions button:disabled{opacity:.35}.weekhint{margin-bottom:10px!important}.weekedit .muted{overflow-wrap:anywhere}#weekEditor{scroll-margin-top:110px}

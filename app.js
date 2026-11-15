@@ -69,14 +69,24 @@ const loadCustom=()=>JSON.parse(localStorage.getItem(CUSTOM_KEY)||'{}');
 const loadOneOff=()=>JSON.parse(localStorage.getItem(ONEOFF_KEY)||'{}');
 const loadCatalog=()=>JSON.parse(localStorage.getItem(CATALOG_KEY)||'{}');
 const safeText=x=>String(x??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-function allExercises(day,date=iso()){
- const regular=ROUTINE[day].ex;
- const custom=loadCustom()[day]||[];
- const once=loadOneOff()?.[date]?.[day]||[];
- const out=[...regular];
- [...custom,...once].forEach(e=>{if(!out.some(x=>x[0]===e[0]))out.push(e)});
- return out;
+// V1.11: planes editables. Los datos históricos permanecen en sus claves originales.
+const PLAN_KEY='jcTrainingWeeklyPlansV111';
+const PLAN_ONCE_KEY='jcTrainingOneWeekPlansV111';
+const planLoad=(key)=>JSON.parse(localStorage.getItem(key)||'{}');
+function planFor(day,date=iso()){
+ const once=planLoad(PLAN_ONCE_KEY);if(Object.prototype.hasOwnProperty.call(once?.[date]||{},day))return once[date][day];
+ return planLoad(PLAN_KEY)[day]||null;
 }
+function legacyExercises(day,date){const out=[...ROUTINE[day].ex.map(e=>e.slice())];
+ [...(loadCustom()[day]||[]),...(loadOneOff()?.[date]?.[day]||[])].forEach(e=>{if(!out.some(x=>x[0]===e[0]))out.push(e.slice())});return out;}
+function allExercises(day,date=iso()){const plan=planFor(day,date);return plan?plan.map(e=>e.slice()):legacyExercises(day,date)}
+function persistPlan(day,date,exercises,scope){
+ const key=scope==='once'?PLAN_ONCE_KEY:PLAN_KEY,data=planLoad(key);
+ if(scope==='once'){data[date]??={};data[date][day]=exercises.map(e=>e.slice())}
+ else data[day]=exercises.map(e=>e.slice());
+ localStorage.setItem(key,JSON.stringify(data));
+}
+function clearPlan(day,date,scope){const key=scope==='once'?PLAN_ONCE_KEY:PLAN_KEY,data=planLoad(key);if(scope==='once'){if(data[date])delete data[date][day]}else delete data[day];localStorage.setItem(key,JSON.stringify(data))}
 function addExercise(day,e,scope,date=iso(),tech=''){
  if(allExercises(day,date).some(x=>x[0].toLowerCase()===e[0].toLowerCase()))return false;
  const key=scope==='once'?ONEOFF_KEY:CUSTOM_KEY;
@@ -107,7 +117,7 @@ const save=x=>localStorage.setItem(HISTORY_KEY,JSON.stringify(x));
 const loadNotes=()=>JSON.parse(localStorage.getItem(NOTES_KEY)||'{}');
 const saveNote=(name,text)=>{const n=loadNotes();n[name]=text;localStorage.setItem(NOTES_KEY,JSON.stringify(n))};
 const loadOrders=()=>JSON.parse(localStorage.getItem(ORDER_KEY)||'{}');
-function orderedExercises(day,date){const base=allExercises(day,date),orders=loadOrders(),names=orders?.[date]?.[day];if(!Array.isArray(names))return base.slice();const map=new Map(base.map(e=>[e[0],e]));const out=names.map(n=>map.get(n)).filter(Boolean);base.forEach(e=>{if(!out.some(x=>x[0]===e[0]))out.push(e)});return out}
+function orderedExercises(day,date){const base=allExercises(day,date),orders=loadOrders(),names=planFor(day,date)?null:orders?.[date]?.[day];if(!Array.isArray(names))return base.slice();const map=new Map(base.map(e=>[e[0],e]));const out=names.map(n=>map.get(n)).filter(Boolean);base.forEach(e=>{if(!out.some(x=>x[0]===e[0]))out.push(e)});return out}
 function saveOrder(day,date,exs){const o=loadOrders();if(!o[date])o[date]={};o[date][day]=exs.map(e=>e[0]);localStorage.setItem(ORDER_KEY,JSON.stringify(o))}
 const loadRests=()=>JSON.parse(localStorage.getItem(REST_KEY)||'{}');
 function restFor(name,def){const r=Number(loadRests()[name]);return Number.isFinite(r)&&r>=30?r:def}
@@ -153,7 +163,7 @@ function bind(day,date,exs=orderedExercises(day,date)){function getState(i){cons
  document.querySelectorAll('[data-restedit]').forEach(x=>x.onclick=()=>{const i=Number(x.dataset.restedit),e=exs[i],cur=restFor(e[0],e[3]);const v=prompt('Descanso habitual en segundos (mínimo 30)',String(cur));if(v===null)return;const n=Math.round(Number(v));if(!Number.isFinite(n)||n<30){alert('Introduce al menos 30 segundos.');return}saveRest(e[0],n);renderToday(day)});
  document.querySelectorAll('[data-saveex]').forEach(x=>x.onclick=()=>{const i=Number(x.dataset.saveex),e=exs[i],st=getState(i);if(st.weights.some(v=>!String(v??'').trim())){alert('Introduce el peso de todas las series.');return}if(st.reps.some(v=>!String(v??'').trim())){alert('Completa las repeticiones de todas las series.');return}if(!String(st.rir).trim()){alert('Introduce el RIR final.');return}st.completed=true;st.done=Array(st.weights.length).fill(true);put(i,st);renderToday(day)});
  document.querySelectorAll('[data-note]').forEach(x=>{x.oninput=()=>{const i=Number(x.dataset.note);saveNote(exs[i][0],x.value)}});
- const move=(i,to)=>{const arr=exs.slice(),item=arr.splice(i,1)[0];arr.splice(to,0,item);saveOrder(day,date,arr);renderToday(day)};
+ const move=(i,to)=>{const arr=exs.slice(),item=arr.splice(i,1)[0];arr.splice(to,0,item);if(planFor(day,date))persistPlan(day,date,arr,'always');else saveOrder(day,date,arr);renderToday(day)};
  document.querySelectorAll('[data-moveup]').forEach(x=>x.onclick=()=>{const i=Number(x.dataset.moveup);if(i>0)move(i,i-1)});
  document.querySelectorAll('[data-movedown]').forEach(x=>x.onclick=()=>{const i=Number(x.dataset.movedown);if(i<exs.length-1)move(i,i+1)});
  document.querySelectorAll('[data-movelast]').forEach(x=>x.onclick=()=>{const i=Number(x.dataset.movelast);if(i<exs.length-1)move(i,exs.length-1)});
@@ -161,15 +171,42 @@ function bind(day,date,exs=orderedExercises(day,date)){function getState(i){cons
 function renderWeek(){setTitle('Semana');document.getElementById('app').innerHTML=`<div class='card'><div class='section-title'><h2>Semana</h2><span>elige día</span></div><div class='daygrid'>${Object.entries(ROUTINE).map(([d,r])=>`<button class='daybtn ${d===selected?'active':''}' data-day='${d}'>${d}: ${r.name}</button>`).join('')}</div></div><div id='day'></div>`;document.querySelectorAll('[data-day]').forEach(b=>b.onclick=()=>{selected=b.dataset.day;renderWeek()});renderDayPreview()}
 function renderDayPreview(){
  const r=ROUTINE[selected],el=document.getElementById('day'),date=weekDate(selected),exs=allExercises(selected,date);
- const custom=loadCustom()[selected]||[],once=loadOneOff()?.[date]?.[selected]||[];
+ const notes=loadNotes();
  el.innerHTML=`<div class='card'><div class='section-title'><h2>${r.name}</h2><span>${r.nutrition}</span></div>
- ${exs.map(e=>{const scope=custom.some(x=>x[0]===e[0])?'always':once.some(x=>x[0]===e[0])?'once':'';return `<div class='weekex'><div><b>${safeText(chosenVariant(selected,e[0]))}</b><div class='muted'>${e[1]} × ${e[2]} · ${e[3]} s descanso${e[0]==='Flexión lateral en polea'?' · por lado':''}</div></div>${scope?`<button class='tinyrest' data-remove='${safeText(e[0])}' data-scope='${scope}'>Eliminar</button>`:''}</div>`}).join('')||'<p class="muted">Descanso</p>'}
- <button id='addExercise' class='secondary wide'>＋ Añadir ejercicio</button>
- <div id='addPanel'></div>
+ <p class='muted weekhint'>Prepara aquí tu rutina. Los cambios permanentes se aplican a las próximas semanas; los puntuales solo a esta fecha.</p>
+ ${exs.map((e,i)=>`<div class='weekex weekedit'><div class='weekmain'><b>${i+1}. ${safeText(chosenVariant(selected,e[0]))}</b><div class='muted'>${e[1]} × ${e[2]} · ${e[3]} s descanso</div>${notes[e[0]]?`<div class='muted'>📝 ${safeText(notes[e[0]])}</div>`:''}</div><div class='weekactions'><button data-weekup='${i}' ${i===0?'disabled':''} aria-label='Subir ejercicio'>↑</button><button data-weekdown='${i}' ${i===exs.length-1?'disabled':''} aria-label='Bajar ejercicio'>↓</button><button data-weekedit='${i}'>Editar</button></div></div>`).join('')||'<p class="muted">Descanso. Puedes añadir ejercicios.</p>'}
+ <div id='weekEditor'></div><button id='addExercise' class='secondary wide'>＋ Añadir ejercicio</button>
+ <div id='addPanel'></div><button id='resetPlan' class='secondary wide'>↺ Restaurar rutina original</button>
  <button id='trainSelected' class='primary wide'>Registrar este entrenamiento</button></div>`;
  document.getElementById('trainSelected').onclick=()=>{view='today';renderToday(selected);syncNav()};
- document.querySelectorAll('[data-remove]').forEach(b=>b.onclick=()=>{if(!confirm('¿Eliminar este ejercicio de la planificación? Los registros ya guardados no se borrarán.'))return;removeExercise(selected,b.dataset.remove,b.dataset.scope,date);renderDayPreview()});
+ const saveChanged=(arr)=>{persistPlan(selected,date,arr,confirm('¿Guardar el nuevo orden para todas las semanas?\nAceptar: todas las semanas.\nCancelar: solo esta semana.')?'always':'once');renderDayPreview()};
+ document.querySelectorAll('[data-weekup],[data-weekdown]').forEach(b=>b.onclick=()=>{const i=Number(b.dataset.weekup??b.dataset.weekdown),delta=b.hasAttribute('data-weekup')?-1:1,arr=exs.map(e=>e.slice());if(i+delta<0||i+delta>=arr.length)return;[arr[i],arr[i+delta]]=[arr[i+delta],arr[i]];saveChanged(arr)});
+ document.querySelectorAll('[data-weekedit]').forEach(b=>b.onclick=()=>showWeekEditor(Number(b.dataset.weekedit),date));
  document.getElementById('addExercise').onclick=()=>showAddForm(date);
+ document.getElementById('resetPlan').onclick=()=>{if(!confirm('¿Restaurar los ejercicios y su orden original? No se borrarán los registros históricos ni las notas.'))return;const scope=prompt('¿Restaurar todas las semanas o solo esta? Escribe: todas / esta','todas');if(scope===null)return;clearPlan(selected,date,scope.trim().toLowerCase()==='esta'?'once':'always');renderDayPreview()};
+}
+function showWeekEditor(index,date){
+ const exs=allExercises(selected,date),e=exs[index];if(!e)return;
+ const names=[...new Set([...Object.values(ROUTINE).flatMap(r=>r.ex.map(e=>e[0])),...Object.keys(TECHNIQUE),...Object.keys(loadCatalog()),...exs.map(x=>x[0])])].sort((a,b)=>a.localeCompare(b,'es'));
+ const panel=document.getElementById('weekEditor'),savedNote=loadNotes()[e[0]]||'';
+ panel.innerHTML=`<form id='weekEditForm' class='addform'><h3>Editar ejercicio ${index+1}</h3>
+ <label>Elegir otro ejercicio del catálogo<select id='weekCatalog'><option value=''>Mantener o escribir nombre…</option>${names.map(n=>`<option value='${safeText(n)}'>${safeText(n)}</option>`).join('')}</select></label>
+ <label>Ejercicio<input id='weekName' maxlength='90' required value='${safeText(e[0])}'></label>
+ <div class='addgrid'><label>Series<input id='weekSets' type='number' min='1' max='12' required value='${e[1]}'></label><label>Repeticiones<input id='weekReps' type='number' min='1' max='50' required value='${e[2]}'></label><label>Descanso (s)<input id='weekRest' type='number' min='30' max='600' step='5' required value='${e[3]}'></label></div>
+ ${EXERCISE_VARIANTS[selected+'|'+e[0]]?`<label>Variante habitual<select id='weekVariant'>${EXERCISE_VARIANTS[selected+'|'+e[0]].map(v=>`<option value='${safeText(v)}' ${chosenVariant(selected,e[0])===v?'selected':''}>${safeText(v)}</option>`).join('')}</select></label>`:''}
+ <label>Notas personales<textarea id='weekNote' rows='3' placeholder='Agarre, asiento, técnica, sensaciones…'>${safeText(savedNote)}</textarea></label>
+ <label>Aplicar modificación a<select id='weekScope'><option value='always'>Todas las semanas</option><option value='once'>Solo esta semana</option></select></label>
+ <div class='row'><button class='primary' type='submit'>Guardar cambios</button><button class='secondary' id='weekCancel' type='button'>Cancelar</button><button class='secondary' id='weekDelete' type='button'>Eliminar ejercicio</button></div></form>`;
+ panel.scrollIntoView({block:'nearest',behavior:'smooth'});
+ document.getElementById('weekCatalog').onchange=ev=>{if(ev.target.value)document.getElementById('weekName').value=ev.target.value};
+ document.getElementById('weekCancel').onclick=()=>panel.innerHTML='';
+ document.getElementById('weekDelete').onclick=()=>{if(!confirm('¿Eliminar este ejercicio de la planificación? El historial seguirá intacto.'))return;exs.splice(index,1);persistPlan(selected,date,exs,document.getElementById('weekScope').value);renderDayPreview()};
+ document.getElementById('weekEditForm').onsubmit=ev=>{ev.preventDefault();const name=document.getElementById('weekName').value.trim(),sets=Number(document.getElementById('weekSets').value),reps=Number(document.getElementById('weekReps').value),rest=Number(document.getElementById('weekRest').value),scope=document.getElementById('weekScope').value;
+ if(!name||sets<1||sets>12||reps<1||reps>50||rest<30||rest>600){alert('Comprueba los valores del ejercicio.');return}
+ if(exs.some((x,i)=>i!==index&&x[0].toLowerCase()===name.toLowerCase())){alert('Ese ejercicio ya está en este día.');return}
+ saveNote(name,document.getElementById('weekNote').value);
+ const variant=document.getElementById('weekVariant');if(variant)setChosenVariant(selected,e[0],variant.value);
+ exs[index]=[name,sets,reps,rest];persistPlan(selected,date,exs,scope);renderDayPreview()};
 }
 function showAddForm(date){
  const panel=document.getElementById('addPanel');
@@ -184,7 +221,7 @@ function showAddForm(date){
  <div class='row'><button type='submit' class='primary'>Guardar ejercicio</button><button type='button' id='cancelAdd' class='secondary'>Cancelar</button></div></form>`;
  document.getElementById('cancelAdd').onclick=()=>panel.innerHTML='';
  document.getElementById('exCatalog').onchange=e=>{const n=e.target.value;document.getElementById('exName').value=n;document.getElementById('exTech').value=TECHNIQUE[n]||loadCatalog()[n]||''};
- document.getElementById('exerciseForm').onsubmit=e=>{e.preventDefault();const name=document.getElementById('exName').value.trim(),sets=Number(document.getElementById('exSets').value),reps=Number(document.getElementById('exReps').value),rest=Number(document.getElementById('exRest').value),scope=document.getElementById('exScope').value,tech=document.getElementById('exTech').value.trim(),rir=document.getElementById('exRir').value.trim();if(!name||sets<1||sets>12||reps<1||reps>50||rest<30||rest>600){alert('Comprueba nombre, series, repeticiones y descanso.');return}if(!addExercise(selected,[name,sets,reps,rest],scope,date,tech)){alert('Este ejercicio ya figura en el día seleccionado.');return}if(rir){const cat=JSON.parse(localStorage.getItem('jcTrainingSuggestedRirV1')||'{}');cat[name]=rir;localStorage.setItem('jcTrainingSuggestedRirV1',JSON.stringify(cat))}renderDayPreview()};
+ document.getElementById('exerciseForm').onsubmit=e=>{e.preventDefault();const name=document.getElementById('exName').value.trim(),sets=Number(document.getElementById('exSets').value),reps=Number(document.getElementById('exReps').value),rest=Number(document.getElementById('exRest').value),scope=document.getElementById('exScope').value,tech=document.getElementById('exTech').value.trim(),rir=document.getElementById('exRir').value.trim();if(!name||sets<1||sets>12||reps<1||reps>50||rest<30||rest>600){alert('Comprueba nombre, series, repeticiones y descanso.');return}if(allExercises(selected,date).some(x=>x[0].toLowerCase()===name.toLowerCase())){alert('Este ejercicio ya figura en el día seleccionado.');return}const updated=allExercises(selected,date);updated.push([name,sets,reps,rest]);persistPlan(selected,date,updated,scope);if(tech){const catalog=loadCatalog();catalog[name]=tech;localStorage.setItem(CATALOG_KEY,JSON.stringify(catalog))}if(rir){const cat=JSON.parse(localStorage.getItem('jcTrainingSuggestedRirV1')||'{}');cat[name]=rir;localStorage.setItem('jcTrainingSuggestedRirV1',JSON.stringify(cat))}renderDayPreview()};
 }
 function renderHistory(){setTitle('Historial');const h=load(),dates=Object.keys(h).sort().reverse();document.getElementById('app').innerHTML=`<div class='card'><div class='section-title'><h2>Historial</h2><span>${dates.length} días</span></div>${dates.length?dates.map(d=>`<div class='hist block'><b>${d} · ${h[d].day}</b>${Object.entries(h[d].ex||{}).filter(([,v])=>v.completed).map(([n,v])=>`<div>${safeText(v.variantName||n)}: ${displayWeights(v)} kg · ${(v.reps||[]).join('/')} · RIR ${v.rir||'-'}</div>`).join('')}</div>`).join(''):'<p class="muted">Todavía no hay entrenamientos guardados.</p>'}</div>`}
 function renderProgress(){setTitle('Progreso');const names=[...new Set([...Object.keys(TECHNIQUE),...Object.values(ROUTINE).flatMap(d=>d.ex.map(e=>e[0])),...Object.values(loadCustom()).flatMap(a=>a.map(e=>e[0])),...Object.values(loadOneOff()).flatMap(v=>Object.values(v).flatMap(a=>a.map(e=>e[0])))])];const cards=names.map(n=>{const a=allFor(n);if(!a.length)return'';const last=a[a.length-1],first=a[0],delta=topWeight(last[1])-topWeight(first[1]),recent=a.slice(-6).reverse();return `<div class='card'><div class='exhead'><h3>${n}</h3><span class='badge'>${topWeight(last[1])||'-'} kg</span></div><p class='muted'>Cambio desde el primer registro: ${delta>0?'+':''}${delta.toFixed(1)} kg</p>${recent.map(([d,v])=>`<div class='progressrow'><span>${d}</span><b>${displayWeights(v)} kg · ${(v.reps||[]).join('/')}</b></div>`).join('')}</div>`}).join('');document.getElementById('app').innerHTML=`<section class='hero'><div class='eyebrow'>EVOLUCIÓN</div><h2>Progreso</h2><p>Cargas y repeticiones por ejercicio</p></section>${cards||'<div class="card"><p class="muted">Guarda tu primer entrenamiento para ver la evolución.</p></div>'}`}
